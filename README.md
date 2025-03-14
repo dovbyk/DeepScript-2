@@ -9,4 +9,9 @@ Before running the finalfont.py program, make sure to rename your .svg files as 
 - Run the finalfont.py program. It will create your font which will be used to render your output.
 - Run the textrender.py program. It will give you your ouput.
 
-
+### Make sure to install these dependencies
+```bash
+pip install Pillow
+pip install fontforge
+pip install psMat
+```
