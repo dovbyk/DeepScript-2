@@ -5,8 +5,8 @@ import os
 import psMat
 
 # Paths
-input_directory = "svg_output"
-output_font_path = "CustomFont3.ttf"
+input_directory = "svg_output" #Put the path of your output directory from pngtosvg.py file
+output_font_path = "CustomFont3.ttf" #Name of your new font which will be created
 
 # Character Mapping
 glyph_map = {
