@@ -1,104 +1,125 @@
-import cv2
+#creates ttf file from svg file
+
+import fontforge
 import os
-import numpy as np
+import psMat
 
 # Paths
-input_image_path = "img4.jpeg"  # Path to your scanned image
-output_directory = "processed_f/demofour2"  # Directory to save processed images
-output_image_with_boxes = "image_with_boxes.jpg"  # Path to save image with bounding boxes
+input_directory = "svg_output"
+output_font_path = "CustomFont3.ttf"
 
-# Create output directory if it doesn't exist
-if not os.path.exists(output_directory):
-    os.makedirs(output_directory)
+# Character Mapping
+glyph_map = {
+    "A": "A.svg", "B": "B.svg", "C": "C.svg", "D": "D.svg",
+    "E": "E.svg", "F": "F.svg", "G": "G.svg", "H": "H.svg",
+    "I": "I.svg", "J": "J.svg", "K": "K.svg", "L": "L.svg",
+    "M": "M.svg", "N": "N.svg", "O": "O.svg", "P": "P.svg",
+    "Q": "Q.svg", "R": "R.svg", "S": "S.svg", "T": "T.svg",
+    "U": "U.svg", "V": "V.svg", "W": "W.svg", "X": "X.svg",
+    "Y": "Y.svg", "Z": "Z.svg",
+    "a": "a.svg", "b": "b.svg", "c": "c.svg", "d": "d.svg",
+    "e": "e.svg", "f": "f.svg", "g": "g.svg", "h": "h.svg",
+    "i": "i.svg", "j": "j.svg", "k": "k.svg", "l": "l.svg",
+    "m": "m.svg", "n": "n.svg", "o": "o.svg", "p": "p.svg",
+    "q": "q.svg", "r": "r.svg", "s": "s.svg", "t": "t.svg",
+    "u": "u.svg", "v": "v.svg", "w": "w.svg", "x": "x.svg",
+    "y": "y.svg", "z": "z.svg"
+}
 
-# Read the image
-image = cv2.imread(input_image_path)
-gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# Define character sets
+uppercase_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+ascender_chars = set('bdfhklt')
+descender_chars = set('gpqy')
+regular_lowercase = set('aceimnorsuvwxz')
 
-# Preprocess the image
-_, binary_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY_INV)
+# Create a new font
+font = fontforge.font()
+font.familyname = "CustomFont"
+font.fullname = "CustomFont Regular"
+font.fontname = "CustomFont-Regular"
 
-# Noise removal using morphological operations
-kernel = np.ones((3, 3), np.uint8)
-binary_image = cv2.morphologyEx(binary_image, cv2.MORPH_OPEN, kernel)  # Remove small noise
-binary_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)  # Fill small gaps
+# Set font metrics
+font.em = 1000
+font.ascent = 800
+font.descent = 200
 
-# Find contours on the cleaned binary image
-contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+def get_scale_factors(char, glyph_height, glyph_width):
+    """Calculate appropriate scale factors based on character type."""
+    if char in uppercase_chars or char in ascender_chars:
+        height_target = 700
+        width_target = 600
+    elif char in descender_chars:
+        # For descenders, we want the main body at x-height
+        # but allow extra space below baseline
+        height_target = 500  # This will be for the main body
+        width_target = 500
+    else:  # regular lowercase
+        height_target = 500
+        width_target = 500
+    
+    height_scale = height_target / glyph_height if glyph_height > 0 else 1
+    width_scale = width_target / glyph_width if glyph_width > 0 else 1
+    
+    return min(height_scale, width_scale)
 
-# Extract bounding boxes from contours
-bounding_boxes = [cv2.boundingRect(c) for c in contours]
-
-# Function to merge close bounding boxes
-def merge_close_boxes(boxes, proximity_threshold=20):
-    merged_boxes = []
-    for box in boxes:
-        x, y, w, h = box
-        merged = False
-        for i in range(len(merged_boxes)):
-            mx, my, mw, mh = merged_boxes[i]
-            # Check if the boxes are close
-            if not (x > mx + mw + proximity_threshold or mx > x + w + proximity_threshold or
-                    y > my + mh + proximity_threshold or my > y + h + proximity_threshold):
-                # Merge the boxes
-                nx = min(x, mx)
-                ny = min(y, my)
-                nw = max(x + w, mx + mw) - nx
-                nh = max(y + h, my + mh) - ny
-                merged_boxes[i] = (nx, ny, nw, nh)
-                merged = True
-                break
-        if not merged:
-            merged_boxes.append(box)
-    return merged_boxes
-
-# Merge bounding boxes that are close to each other
-merged_boxes = merge_close_boxes(bounding_boxes)
-
-# Sort the merged bounding boxes top-to-bottom, left-to-right
-sorted_boxes = sorted(merged_boxes, key=lambda b: (b[1], b[0]))
-
-# Copy the input image to draw bounding boxes
-image_with_boxes = image.copy()
-
-# Process and save each character
-for i, (x, y, w, h) in enumerate(sorted_boxes):
-    # Filter out noise by setting a size threshold
-    if w > 10 and h > 10:
-        # Extract the character from the binary image
-        char_image = binary_image[y:y + h, x:x + w]
-
-        # Resize and pad the character to 28x28
-        aspect_ratio = w / h
-        if aspect_ratio > 1:  # Wider than tall
-            new_width = 20
-            new_height = int(20 / aspect_ratio)
-        else:  # Taller than wide
-            new_height = 20
-            new_width = int(20 * aspect_ratio)
+def position_glyph(glyph, char):
+    """Position the glyph correctly relative to the baseline."""
+    bbox = glyph.boundingBox()
+    
+    if char in descender_chars:
+        # Calculate the main body height (assuming it's the top 2/3 of the glyph)
+        main_body_height = (bbox[3] - bbox[1]) * 2/3
         
-        resized_char = cv2.resize(char_image, (new_width, new_height), interpolation=cv2.INTER_AREA)
-        padded_char = cv2.copyMakeBorder(
-            resized_char,
-            top=(28 - new_height) // 2,
-            bottom=(28 - new_height) - (28 - new_height) // 2,
-            left=(28 - new_width) // 2,
-            right=(28 - new_width) - (28 - new_width) // 2,
-            borderType=cv2.BORDER_CONSTANT,
-            value=0
-        )
+        # Position so the main body aligns with x-height and descender extends below
+        baseline_shift = 200 - main_body_height  # 200: increase the value the descenders move upwards
+    else:
+        baseline_shift = 0
+    
+    matrix = psMat.translate(0, baseline_shift)
+    glyph.transform(matrix)
 
-        # Normalize the image to range [0, 1]
-        normalized_char = padded_char / 255.0
+# Add glyphs
+for char, svg_file in glyph_map.items():
+    svg_path = os.path.join(input_directory, svg_file)
+    if not os.path.exists(svg_path):
+        print(f"SVG file not found: {svg_path}. Skipping {char}.")
+        continue
 
-        # Save the character as an individual image
-        output_path = os.path.join(output_directory, f"character_{i}.png")
-        cv2.imwrite(output_path, (normalized_char * 255).astype(np.uint8))  # Convert back to uint8
-        print(f"Saved: {output_path}")
+    # Create a glyph for the character
+    glyph = font.createChar(ord(char), char)
+    glyph.importOutlines(svg_path)
 
-        # Draw bounding box on the image
-        cv2.rectangle(image_with_boxes, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    # Get original dimensions
+    bbox = glyph.boundingBox()
+    glyph_width = bbox[2] - bbox[0]
+    glyph_height = bbox[3] - bbox[1]
 
-# Save the image with bounding boxes
-cv2.imwrite(output_image_with_boxes, image_with_boxes)
-print(f"Image with bounding boxes saved to '{output_image_with_boxes}'.")
+    # Calculate and apply appropriate scaling
+    scale_factor = get_scale_factors(char, glyph_height, glyph_width)
+    
+    if char in descender_chars:
+        # For descenders, apply a larger scale to allow for the descender
+        scale_factor *= 1.5  # Adjust this value to control descender length
+    
+    glyph.transform(psMat.scale(scale_factor))
+
+    # Position the glyph correctly
+    position_glyph(glyph, char)
+
+    # Set appropriate glyph width
+    new_bbox = glyph.boundingBox()
+    new_width = new_bbox[2] - new_bbox[0]
+    glyph.width = int(new_width + 100)
+
+# Set font-wide metrics
+font.hhea_ascent = font.ascent
+font.hhea_descent = -font.descent
+font.os2_typoascent = font.ascent
+font.os2_typodescent = -font.descent
+font.os2_winascent = font.ascent
+font.os2_windescent = font.descent
+font.os2_xheight = 500
+
+# Generate the font
+font.generate(output_font_path)
+print(f"Font saved as {output_font_path}")
