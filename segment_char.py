@@ -3,9 +3,9 @@ import os
 import numpy as np
 
 # Paths
-input_image_path = "img4.jpeg"  # Path to your scanned image
-output_directory = "processed_f/demofour2"  # Directory to save processed images
-output_image_with_boxes = "image_with_boxes.jpg"  # Path to save image with bounding boxes
+input_image_path = "img4.jpeg"  # Path to your scanned input image
+output_directory = "processed_f/demofour2"  # Directory to save your segmented characters
+output_image_with_boxes = "image_with_boxes.jpg"  # Optional file, you can keep it as it is
 
 # Create output directory if it doesn't exist
 if not os.path.exists(output_directory):
