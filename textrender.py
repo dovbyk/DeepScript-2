@@ -1,11 +1,11 @@
 from PIL import Image, ImageDraw, ImageFont
 import random
 
-font1="/home/sus/Desktop/AR2/AB/prgfiles/CustomFont3.ttf"
+font1="CustomFont3.ttf"  #Path to your output font file from finalfont.py
 #font1 = "/home/sus/Downloads/font3.ttf"  # Regular text font
 #font2 = "/home/sus/Downloads/font2.ttf"  # Additional text font
-font_err = "/home/sus/Downloads/error.ttf"  # Error font
-symbols = '/home/sus/Downloads/symbol.ttf'  # Symbol font
+#font_err = "/home/sus/Downloads/error.ttf"  # Error font
+#symbols = '/home/sus/Downloads/symbol.ttf'  # Symbol font
 
 
 def apply_text_shadow(draw, text, position, font, shadow_offset=(2, 2), shadow_color='gray'):
@@ -78,7 +78,7 @@ def render_text(input_text, output_path):
             x += space_width + random.randint(1, 90)
 
             if random.randint(0, 500) == 11:
-                generate_error()
+                #generate_error()
 
         x = 50
         y += word_height + paragraph_spacing
@@ -100,4 +100,4 @@ as these technologies continue to evolve society must address questions about pr
 certainly heres a text separated into three paragraphs the importance of mental health awareness has grown significantly in recent years as society becomes more open to discussing emotional wellbeing individuals are encouraged to prioritize their mental health just as they would their physical health this shift in perspective is crucial as mental health issues affect millions globally often leading to debilitating conditions if left unaddressed by fostering an environment where mental health conversations are normalized we can reduce stigma and encourage those struggling to seek help
 education plays a vital role in promoting mental health awareness schools and workplaces are increasingly integrating mental health education into their programs providing resources and support systems for individuals to understand and manage their mental wellbeing workshops seminars and counseling services are essential components of this educational approach equipping people with the tools they need to cope with stress anxiety and other mental health challenges
 ultimately the goal is to create a supportive community that values mental health as an integral part of overall wellbeing by prioritizing mental health awareness and education we can empower individuals to take charge of their emotional health this proactive approach not only benefits individuals but also fosters healthier relationships and communities paving the way for a brighter future for everyone feel free to ask if you need any modifications or additional content'''
-render_text(input_text, "/home/sus/Desktop/output_combined2.png")
+render_text(input_text, "Output.png")
