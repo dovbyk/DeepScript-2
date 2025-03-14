@@ -5,7 +5,7 @@ from PIL import Image
 import subprocess
 
 # Directories
-input_directory = "processed_f/demofour2"  # Directory containing the PNG files
+input_directory = "segmented_chars"  # Directory containing the PNG files
 bmp_directory = "bmp_output"  # Directory to save intermediate BMP files
 svg_directory = "svg_output"  # Directory to save the SVG files
 
